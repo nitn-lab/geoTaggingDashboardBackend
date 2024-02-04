@@ -355,13 +355,6 @@ export default {
                 asset_id: result.insertId,
             });
 
-            // const [result] = await DB.execute(
-            //     'INSERT INTO `assets` (`asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`) VALUES (?,?,?,?,?,?,?)',
-            //     [asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images]
-            // );
-            // console.log('result1',result1)
-          
-            // DB.end();
         } catch (err) {
             next(err);
         }
