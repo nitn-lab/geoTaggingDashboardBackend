@@ -43,6 +43,7 @@ routes.post(
       .trim()
       .isEmail()
       .custom(async (email) => {
+        
         const isExist = await fetchUserByEmailOrID(email);
         if (isExist.length)
           throw new Error("A user already exists with this e-mail address");
@@ -132,9 +133,19 @@ routes.post(
     controller.block_engineer
   );
 
+//Add new asset
+routes.post(
+    "/add-asset",
+    validate,
+    controller.add_assests
+  );
+
 // get all district-engineer 
 routes.get("/get-district-engineers", tokenValidation(), validate, controller.getDistrictEngineers);
 
 routes.get("/get-block-engineers",tokenValidation(), validate, controller.getBlockEngineers);
+
+routes.get("/get-assets",tokenValidation(), validate, controller.getAssets);
+
 
 export default routes;

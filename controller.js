@@ -21,7 +21,7 @@ export const validate = (req, res, next) => {
 
 // If email already exists in database
 export const fetchUserByEmailOrID = async (data, isEmail = true) => {
-    
+   
     let sql = 'SELECT * FROM `users` WHERE `email`=?';
     if (!isEmail)
         sql = 'SELECT `id` ,`name`, `email` FROM `users` WHERE `id`=?';
@@ -41,11 +41,17 @@ export const fetchAllBlockEngineers = async () => {
     return row;
 }
 
+export const fetchAllAssets = async () => {
+    let sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images` FROM `assets`';
+    const [row] = await DB.execute(sql);
+    return row;
+}
+
 export default {
 
     signup: async (req, res, next) => {
         try {
-            const { name, email, password } = matchedData(req.body);
+            const { name, email, password } = matchedData(req);
 
             const saltRounds = 10;
             // Hash the password
@@ -61,6 +67,7 @@ export default {
                 message: 'You have been successfully registered.',
                 user_id: result.insertId,
             });
+            // DB.end();
         } catch (err) {
             next(err);
         }
@@ -102,6 +109,7 @@ export default {
                 access_token,
                 refresh_token,
             });
+            // DB.end();
         } catch (err) {
             next(err);
         }
@@ -207,6 +215,7 @@ export default {
                 message: 'You have been successfully added a district engineer.',
                 engineer_id: result.insertId,
             });
+            // DB.end();
         } catch (err) {
             next(err);
         }
@@ -236,6 +245,7 @@ export default {
                     message: 'You have been successfully added a block engineer.',
                     engineer_id: result.insertId,
                 });
+                // DB.end();
             } catch (err) {
                 next(err);
             }
@@ -246,7 +256,7 @@ export default {
             const data = verifyToken(req.headers.access_token);
             if (data?.status) return res.status(data.status).json(data);
             const engineer = await fetchAllDistrictEngineers();
-
+            // DB.end();
             if (engineer.length === 0) {
                 return res.status(404).json({
                     status: 404,
@@ -267,6 +277,7 @@ export default {
             const data = verifyToken(req.headers.access_token);
             if (data?.status) return res.status(data.status).json(data);
             const block_engineer = await fetchAllBlockEngineers();
+            // DB.end();
 
             if (block_engineer.length === 0) {
                 return res.status(404).json({
@@ -277,6 +288,48 @@ export default {
             res.json({
                 status: 200,
                 block_engineer: block_engineer,
+            });
+        } catch (err) {
+            next(err);
+        }
+    },
+    // add district engineers 
+    add_assests: async (req, res, next) => {
+            try {
+                const { asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images} = req.body;
+
+                const [result] = await DB.execute(
+                    'INSERT INTO `assets` (`asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`) VALUES (?,?,?,?,?,?,?)',
+                    [asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images]
+                );
+                // console.log('result1',result1)
+                res.status(201).json({
+                    status: 201,
+                    message: 'You have been successfully added a asset.',
+                    asset_id: result.insertId,
+                });
+                // DB.end();
+            } catch (err) {
+                next(err);
+            }
+    },
+    getAssets: async (req, res, next) => {
+        try {
+            // Verify the access token
+            const data = verifyToken(req.headers.access_token);
+            if (data?.status) return res.status(data.status).json(data);
+            const assets = await fetchAllAssets();
+            // DB.end();
+
+            if (assets.length === 0) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'No Assest Found in DB.',
+                });
+            }
+            res.json({
+                status: 200,
+                assets: assets,
             });
         } catch (err) {
             next(err);
