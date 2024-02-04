@@ -293,7 +293,7 @@ export default {
             next(err);
         }
     },
-    // add district engineers 
+    // add new assests
     add_assests: async (req, res, next) => {
             try {
                 const { asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images} = req.body;
@@ -335,4 +335,35 @@ export default {
             next(err);
         }
     },
+    update_asset: async (req, res, next) => {
+        try {
+            // const { asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images} = req.body;
+            const updatedData = req.body;
+            const assetId = req.params.id;
+            const convertedString = Object.entries(updatedData)
+            .map(([key, value]) => `${key}="${value}"`)
+            .join(', ');
+
+            // console.log(convertedString)
+
+            const [result] = await DB.execute(`UPDATE assets SET ${convertedString} WHERE id = ${assetId}`);
+
+            // console.log('result1',result1)
+            res.status(201).json({
+                status: 201,
+                message: 'You have been successfully updated a asset.',
+                asset_id: result.insertId,
+            });
+
+            // const [result] = await DB.execute(
+            //     'INSERT INTO `assets` (`asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`) VALUES (?,?,?,?,?,?,?)',
+            //     [asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images]
+            // );
+            // console.log('result1',result1)
+          
+            // DB.end();
+        } catch (err) {
+            next(err);
+        }
+}, 
 };
