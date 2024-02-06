@@ -26,14 +26,14 @@ export const fetchUserByEmailOrID = async (data, isEmail = true) => {
     if (!isEmail)
         sql = 'SELECT `id` ,`name`, `email` FROM `users` WHERE `id`=?';
     const [row] = await DB.execute(sql, [data]);
-    DB.end();
+    // DB.end();
     return row;
 };
 
 export const fetchAllDistrictEngineers = async () => {
     let sql = 'SELECT `engineer_name`,`mobile`,`email`,`district` FROM `district_engineers`';
     const [row] = await DB.execute(sql);
-    DB.end();
+    // DB.end();
     return row;
 };
 
@@ -70,7 +70,7 @@ export default {
                 message: 'You have been successfully registered.',
                 user_id: result.insertId,
             });
-            DB.end();
+            // DB.end();
         } catch (err) {
             next(err);
         }
@@ -103,7 +103,7 @@ export default {
                 'INSERT INTO `refresh_tokens` (`user_id`,`token`) VALUES (?,?)',
                 [user.id, md5Refresh]
             );
-            DB.end();
+            // DB.end();
             if (!result.affectedRows) {
                 throw new Error('Failed to whitelist the refresh token.');
             }
@@ -135,7 +135,7 @@ export default {
                 status: 200,
                 user: user[0],
             });
-            DB.end();
+            // DB.end();
         } catch (err) {
             next(err);
         }
@@ -189,7 +189,7 @@ export default {
                 access_token,
                 refresh_token,
             });
-            DB.end();
+            // DB.end();
         } catch (err) {
             next(err);
         }
@@ -208,7 +208,7 @@ export default {
                 'INSERT INTO `users` (`name`,`email`,`password`) VALUES (?,?,?)',
                 [engineer_name, email, hashPassword]
             );
-            // DB.end();
+            DB.end();
             // console.log('result1',result1)
             // Store user data in the database
             const [result] = await DB.execute(
@@ -221,7 +221,7 @@ export default {
                 message: 'You have been successfully added a district engineer.',
                 engineer_id: result.insertId,
             });
-            DB.end();
+            // DB.end();
         } catch (err) {
             next(err);
         }
@@ -251,7 +251,7 @@ export default {
                     message: 'You have been successfully added a block engineer.',
                     engineer_id: result.insertId,
                 });
-                DB.end();
+                // DB.end();
             } catch (err) {
                 next(err);
             }
@@ -314,7 +314,7 @@ export default {
                     message: 'You have been successfully added a asset.',
                     asset_id: result.insertId,
                 });
-                DB.end();
+                // DB.end();
             } catch (err) {
                 next(err);
             }
@@ -360,7 +360,7 @@ export default {
                 message: 'You have been successfully updated a asset.',
                 asset_id: result.insertId,
             });
-            DB.end();
+            // DB.end();
 
         } catch (err) {
             next(err);
