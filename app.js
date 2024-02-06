@@ -2,7 +2,7 @@ import express from 'express';
 import dbConnection from './dbConnection.js';
 import routes from './routes.js';
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 8080;
 
 // Middleware to parse JSON requests
 app.use(express.json());
