@@ -1,7 +1,9 @@
 import express from 'express';
 import dbConnection from './dbConnection.js';
 import routes from './routes.js';
+import cors from 'cors';
 const app = express();
+app.use(cors());
 const port = process.env.PORT || 8080;
 
 // Middleware to parse JSON requests

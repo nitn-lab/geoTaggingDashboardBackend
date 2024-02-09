@@ -24,7 +24,7 @@ export const fetchUserByEmailOrID = async (data, isEmail = true) => {
    
     let sql = 'SELECT * FROM `users` WHERE `email`=?';
     if (!isEmail)
-        sql = 'SELECT `id` ,`name`, `email` FROM `users` WHERE `id`=?';
+        sql = 'SELECT * FROM `users` WHERE `id`=?';
     const [row] = await DB.execute(sql, [data]);
     // DB.end();
     return row;
@@ -79,6 +79,7 @@ export default {
     login: async (req, res, next) => {
         try {
             const { user, password } = req.body;
+            console.log(user, password)
             const verifyPassword = await bcrypt.compare(
                 password,
                 user.password
@@ -103,7 +104,19 @@ export default {
                 'INSERT INTO `refresh_tokens` (`user_id`,`token`) VALUES (?,?)',
                 [user.id, md5Refresh]
             );
+            // Storing refresh token in MD5 format
+            
+                        // 
             // DB.end();
+            const user_data = await fetchUserByEmailOrID(user.id, false);
+            // console.log("user_data",Object.keys(user_data).length)
+            if (Object.keys(user_data).length !== 1) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'User not found',
+                });
+            }
+            console.log("user_data",user_data)
             if (!result.affectedRows) {
                 throw new Error('Failed to whitelist the refresh token.');
             }
@@ -111,6 +124,8 @@ export default {
                 status: 200,
                 access_token,
                 refresh_token,
+
+                response:user_data
             });
             // DB.end();
         } catch (err) {
