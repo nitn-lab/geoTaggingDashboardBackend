@@ -11,5 +11,5 @@ const connection = () => {
         database: DB_NAME,
     });
 };
-
+// connection().promise().releaseConnection
 export default connection().promise();

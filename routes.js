@@ -139,6 +139,24 @@ routes.post(
     validate,
     controller.add_assests
   );
+routes.post(
+  "/get-assets-by-district-or-block",
+  validate,
+  controller.getAssetsByDistrictorBlock
+)  
+// add district admin
+routes.post(
+    "/add-district-admin",
+    validate,
+    controller.add_district_admin
+);
+
+// add block admin
+routes.post(
+    "/add-block-admin",
+    validate,
+    controller.add_block_admin
+)
 
 // get all district-engineer 
 routes.get("/get-district-engineers", tokenValidation(), validate, controller.getDistrictEngineers);

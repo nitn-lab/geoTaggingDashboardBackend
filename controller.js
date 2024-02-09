@@ -4,6 +4,7 @@ import { validationResult, matchedData } from 'express-validator';
 import { generateToken, verifyToken } from './tokenHandler.js';
 import DB from './dbConnection.js';
 
+
 const validation_result = validationResult.withDefaults({
     formatter: (error) => error.msg,
 });
@@ -44,10 +45,27 @@ export const fetchAllBlockEngineers = async () => {
 }
 
 export const fetchAllAssets = async () => {
-    let sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images` FROM `assets`';
+    let sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block` FROM `assets`';
     const [row] = await DB.execute(sql);
     return row;
 }
+
+
+
+
+export const fetchAssetsByDistrictOrBlock = async (data, isBlock) => {
+   
+    let sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block` FROM `assets` WHERE `district`=?';
+    if (isBlock)
+        sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block` FROM `assets` WHERE `block`=?';
+    const [row] = await DB.execute(sql, [data]);
+    // DB.end();
+    return row;
+};
+
+
+
+
 
 export default {
 
@@ -71,6 +89,7 @@ export default {
                 user_id: result.insertId,
             });
             // DB.end();
+            DB.releaseConnection();
         } catch (err) {
             next(err);
         }
@@ -116,7 +135,7 @@ export default {
                     message: 'User not found',
                 });
             }
-            console.log("user_data",user_data)
+            // console.log("user_data",user_data)
             if (!result.affectedRows) {
                 throw new Error('Failed to whitelist the refresh token.');
             }
@@ -128,6 +147,7 @@ export default {
                 response:user_data
             });
             // DB.end();
+            DB.releaseConnection();
         } catch (err) {
             next(err);
         }
@@ -151,6 +171,7 @@ export default {
                 user: user[0],
             });
             // DB.end();
+            DB.releaseConnection();
         } catch (err) {
             next(err);
         }
@@ -205,6 +226,7 @@ export default {
                 refresh_token,
             });
             // DB.end();
+            DB.releaseConnection();
         } catch (err) {
             next(err);
         }
@@ -237,6 +259,7 @@ export default {
                 engineer_id: result.insertId,
             });
             // DB.end();
+            DB.releaseConnection();
         } catch (err) {
             next(err);
         }
@@ -266,6 +289,7 @@ export default {
                     message: 'You have been successfully added a block engineer.',
                     engineer_id: result.insertId,
                 });
+                DB.releaseConnection();
                 // DB.end();
             } catch (err) {
                 next(err);
@@ -288,6 +312,7 @@ export default {
                 status: 200,
                 engineer: engineer,
             });
+            DB.releaseConnection();
         } catch (err) {
             next(err);
         }
@@ -310,6 +335,7 @@ export default {
                 status: 200,
                 block_engineer: block_engineer,
             });
+            DB.releaseConnection();
         } catch (err) {
             next(err);
         }
@@ -317,11 +343,11 @@ export default {
     // add new assests
     add_assests: async (req, res, next) => {
             try {
-                const { asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images} = req.body;
+                const { asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images,scheme,financial_year,district,block} = req.body;
 
                 const [result] = await DB.execute(
-                    'INSERT INTO `assets` (`asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`) VALUES (?,?,?,?,?,?,?)',
-                    [asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images]
+                    'INSERT INTO `assets` (`asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block`) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+                    [asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images,scheme,financial_year,district,block]
                 );
                 // console.log('result1',result1)
                 res.status(201).json({
@@ -330,6 +356,7 @@ export default {
                     asset_id: result.insertId,
                 });
                 // DB.end();
+                DB.releaseConnection();
             } catch (err) {
                 next(err);
             }
@@ -352,10 +379,46 @@ export default {
                 status: 200,
                 assets: assets,
             });
+            DB.releaseConnection();
         } catch (err) {
             next(err);
         }
     },
+    getAssetsByDistrictorBlock: async (req, res, next) => {
+        try {
+            const filterdata = req.body;
+            const Filterkeys=Object.keys(filterdata)
+            var assests;
+            
+            if(Filterkeys[0]=='district'){
+                assests = await fetchAssetsByDistrictOrBlock(filterdata['district'], false);
+            }
+            else if(Filterkeys[0]=='block'){
+                assests = await fetchAssetsByDistrictOrBlock(filterdata['block'], true);
+            }
+            else{
+                return res.status(404).json({
+                    status: 404,
+                    message: 'Please provide district or block in body.',
+                });
+            }
+            
+            if (assests.length === 0) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'No Assest Found In DB.',
+                });
+            }
+            res.json({
+                status: 200,
+                assests: assests,
+            });
+            // DB.end();
+            DB.releaseConnection();
+        } catch (err) {
+            next(err);
+        }
+    },    
     update_asset: async (req, res, next) => {
         try {
             // const { asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images} = req.body;
@@ -375,10 +438,73 @@ export default {
                 message: 'You have been successfully updated a asset.',
                 asset_id: result.insertId,
             });
-            // DB.end();
+            DB.releaseConnection();
 
         } catch (err) {
             next(err);
         }
-}, 
+    },
+    // add district admin 
+    add_district_admin: async (req, res, next) => {
+        try {
+            const { name, email, mobile, district, password } = req.body;
+
+            const saltRounds = 10;
+
+            const hashPassword = await bcrypt.hash(password, saltRounds);
+
+            const [result1] = await DB.execute(
+                'INSERT INTO `users` (`name`,`email`,`password`) VALUES (?,?,?)',
+                [name, email, hashPassword]
+            );
+
+            const [result] = await DB.execute(
+                'INSERT INTO `district_admin` (`name`,`email`,`mobile`,`district`,`password`) VALUES (?,?,?,?,?)',
+                [name, email, mobile, district,hashPassword]
+            );
+
+            res.status(201).json({
+                status: 201,
+                message: 'You have been successfully added a district admin.',
+                engineer_id: result.insertId,
+            });
+            DB.releaseConnection();
+        } catch (err) {
+            DB.releaseConnection();
+            next(err);
+        }
+    },
+    // add block admin
+    add_block_admin: async (req, res, next) => {
+        try {
+            const { name, email, mobile, district, block, password } = req.body;
+            
+            const saltRounds = 10;
+            
+            const hashPassword = await bcrypt.hash(password, saltRounds);
+
+            const [result1] = await DB.execute(
+                'INSERT INTO `users` (`name`,`email`,`password`) VALUES (?,?,?)',
+                [name, email, hashPassword]
+            );
+
+            const [result] = await DB.execute(
+                'INSERT INTO `block_admin` (`name`,`email`,`mobile`,`district`,`block`,`password`) VALUES (?,?,?,?,?,?)',
+                [name, email, mobile, district,block,hashPassword]
+            );
+        
+            res.status(201).json({
+                status: 201,
+                message: 'You have been successfully added a block admin.',
+                blocl_admin_id: result.insertId,
+            });
+
+             DB.releaseConnection();
+        } catch (err) {
+            // DB.end();
+             DB.releaseConnection();
+            next(err);
+        }
+    },
+   
 };
