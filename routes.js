@@ -140,10 +140,16 @@ routes.post(
     controller.add_assests
   );
 routes.post(
-  "/get-assets-by-district-or-block",
+  "/get-assets-by-filter",
   validate,
-  controller.getAssetsByDistrictorBlock
-)  
+  controller.getAssetsByFilter
+)
+
+routes.get(
+  "/fetchAllEngineers",
+  validate,
+  controller.getAllEngineers
+)
 // add district admin
 routes.post(
     "/add-district-admin",
