@@ -20,6 +20,8 @@ export const validate = (req, res, next) => {
     next();
 };
 
+
+// `select name,email,mobile,level,isAdmin,isMobileUser from block_admin where email=${email} union all select name,email,mobile,level,isAdmin,isMobileUser from  district_admin where email=${email}union all select name,email,mobile,level,isAdmin,isMobileUser from district_engineers where email=${email}union all select name,email,mobile,level,isAdmin,isMobileUser from block_engineers where email=${email};`
 // If email already exists in database
 export const fetchUserByEmailOrID = async (data, isEmail = true) => {
    
@@ -31,19 +33,26 @@ export const fetchUserByEmailOrID = async (data, isEmail = true) => {
     return row;
 };
 
+
+
+
 export const fetchAllDistrictEngineers = async () => {
-    let sql = 'SELECT `engineer_name`,`mobile`,`email`,`district` FROM `district_engineers`';
+    let sql = 'SELECT `name`,`mobile`,`email`,`district` FROM `district_engineers`';
     const [row] = await DB.execute(sql);
     // DB.end();
     return row;
 };
 
 export const fetchAllBlockEngineers = async () => {
-    let sql = 'SELECT `engineer_name`,`mobile`,`email`,`district`, `block` FROM `block_engineers`';
+    let sql = 'SELECT `name`,`mobile`,`email`,`district`, `block` FROM `block_engineers`';
     const [row] = await DB.execute(sql);
     return row;
 }
-
+export const fetchAllEngineers = async () => {
+    let sql = 'SELECT `name`,`mobile`,`email`,`district` FROM `block_engineers` UNION ALL SELECT `name`,`mobile`,`email`,`district` FROM `district_engineers`';
+    const [row] = await DB.execute(sql);
+    return row;
+}
 export const fetchAllAssets = async () => {
     let sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block` FROM `assets`';
     const [row] = await DB.execute(sql);
@@ -55,9 +64,19 @@ export const fetchAllAssets = async () => {
 
 export const fetchAssetsByDistrictOrBlock = async (data, isBlock) => {
    
-    let sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block` FROM `assets` WHERE `district`=?';
+    let sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block`,`asset_tagging` FROM `assets` WHERE `district`=?';
     if (isBlock)
-        sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block` FROM `assets` WHERE `block`=?';
+        sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block`,`asset_tagging` FROM `assets` WHERE `block`=?';
+    const [row] = await DB.execute(sql, [data]);
+    // DB.end();
+    return row;
+};
+
+export const fetchAssetsByIDOrAssetsTagging = async (data, idID) => {
+   
+    let sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block`,`asset_tagging` FROM `assets` WHERE `asset_tagging`=?';
+    if (idID)
+        sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block`,`asset_tagging` FROM `assets` WHERE `id`=?';
     const [row] = await DB.execute(sql, [data]);
     // DB.end();
     return row;
@@ -98,7 +117,7 @@ export default {
     login: async (req, res, next) => {
         try {
             const { user, password } = req.body;
-            console.log(user, password)
+            // console.log(user, password)
             const verifyPassword = await bcrypt.compare(
                 password,
                 user.password
@@ -127,9 +146,31 @@ export default {
             
                         // 
             // DB.end();
-            const user_data = await fetchUserByEmailOrID(user.id, false);
+            let user_data;
+            let dataLength;
+
+            // check user is super admin or not
+            let email=user.email;
+            
+            const isSuperAdmin = await DB.execute(`SELECT isSuperAdmin FROM users WHERE email='${email}';`)
+            // console.log(isSuperAdmin[0][0]['isSuperAdmin'])
+
+            if(isSuperAdmin===1){
+            let query = `select name,email,mobile,level,isSuperAdmin,isAdmin,isMobileUser from block_admin where email='${email}'
+            union all select name,email,mobile,level,isSuperAdmin,isAdmin,isMobileUser from district_admin where email='${email}'
+            union all select name,email,mobile,level,isSuperAdmin,isAdmin,isMobileUser from district_engineers where email='${email}'
+            union all select name,email,mobile,level,isSuperAdmin,isAdmin,isMobileUser from block_engineers where email='${email}';`;
+            user_data = await DB.execute(query);
+            dataLength = user_data[0].length
+            }
+            else{
+                user_data = await fetchUserByEmailOrID(user.id, false);
+                dataLength=Object.keys(user_data).length
+            }
+            
             // console.log("user_data",Object.keys(user_data).length)
-            if (Object.keys(user_data).length !== 1) {
+            // console.log(user_data)
+            if (dataLength !== 1) {
                 return res.status(404).json({
                     status: 404,
                     message: 'User not found',
@@ -144,7 +185,7 @@ export default {
                 access_token,
                 refresh_token,
 
-                response:user_data
+                response:user_data[0]
             });
             // DB.end();
             DB.releaseConnection();
@@ -235,22 +276,22 @@ export default {
     // add district engineers 
     district_engineer: async (req, res, next) => {
         try {
-            const { engineer_name, mobile, email,district,password } = req.body;
-            // console.log("engineerName",engineer_name, mobile, email,district,password)
+            const { name, mobile, email,district,password } = req.body;
+            // console.log("engineerName",name, mobile, email,district,password)
             const saltRounds = 10;
             // Hash the password
             const hashPassword = await bcrypt.hash(password, saltRounds);
 
             const [result1] = await DB.execute(
                 'INSERT INTO `users` (`name`,`email`,`password`) VALUES (?,?,?)',
-                [engineer_name, email, hashPassword]
+                [name, email, hashPassword]
             );
-            DB.end();
+            // DB.end();
             // console.log('result1',result1)
             // Store user data in the database
             const [result] = await DB.execute(
-                'INSERT INTO `district_engineers` (`engineer_name`,`mobile`,`email`,`district`,`password`) VALUES (?,?,?,?,?)',
-                [engineer_name, mobile, email,district,hashPassword]
+                'INSERT INTO `district_engineers` (`name`,`mobile`,`email`,`district`,`password`) VALUES (?,?,?,?,?)',
+                [name, mobile, email,district,hashPassword]
             );
             // console.log('result1',result1)
             res.status(201).json({
@@ -268,20 +309,20 @@ export default {
     // add block engineers 
     block_engineer: async (req, res, next) => {
             try {
-                const { engineer_name, mobile, email,district,block,password } = req.body;
+                const { name, mobile, email,district,block,password } = req.body;
                 
                 const saltRounds = 10;
                 const hashPassword = await bcrypt.hash(password, saltRounds);
     
                 const [result1] = await DB.execute(
                     'INSERT INTO `users` (`name`,`email`,`password`) VALUES (?,?,?)',
-                    [engineer_name, email, hashPassword]
+                    [name, email, hashPassword]
                 );
                 // console.log('result1',result1)
                 // Store user data in the database
                 const [result] = await DB.execute(
-                    'INSERT INTO `block_engineers` (`engineer_name`,`mobile`,`email`,`district`,`block`,`password`) VALUES (?,?,?,?,?,?)',
-                    [engineer_name, mobile, email,district,block,hashPassword]
+                    'INSERT INTO `block_engineers` (`name`,`mobile`,`email`,`district`,`block`,`password`) VALUES (?,?,?,?,?,?)',
+                    [name, mobile, email,district,block,hashPassword]
                 );
                 // console.log('result1',result1)
                 res.status(201).json({
@@ -340,6 +381,8 @@ export default {
             next(err);
         }
     },
+    ////////////////////////////////////////////     /* Assets /*    /////////////////////////////////////////////////////////
+
     // add new assests
     add_assests: async (req, res, next) => {
             try {
@@ -384,7 +427,7 @@ export default {
             next(err);
         }
     },
-    getAssetsByDistrictorBlock: async (req, res, next) => {
+    getAssetsByFilter: async (req, res, next) => {
         try {
             const filterdata = req.body;
             const Filterkeys=Object.keys(filterdata)
@@ -396,10 +439,16 @@ export default {
             else if(Filterkeys[0]=='block'){
                 assests = await fetchAssetsByDistrictOrBlock(filterdata['block'], true);
             }
+            else if(Filterkeys[0]=='id'){
+                assests = await fetchAssetsByIDOrAssetsTagging(filterdata['id'], true);
+            }
+            else if(Filterkeys[0]=='asset_tagging'){
+                assests = await fetchAssetsByIDOrAssetsTagging(filterdata['asset_tagging'], false);
+            }
             else{
                 return res.status(404).json({
                     status: 404,
-                    message: 'Please provide district or block in body.',
+                    message: 'Please provide district/block/id/asset_tagging in body.',
                 });
             }
             
@@ -444,6 +493,7 @@ export default {
             next(err);
         }
     },
+
     // add district admin 
     add_district_admin: async (req, res, next) => {
         try {
@@ -496,13 +546,37 @@ export default {
             res.status(201).json({
                 status: 201,
                 message: 'You have been successfully added a block admin.',
-                blocl_admin_id: result.insertId,
+                block_admin_id: result.insertId,
             });
 
              DB.releaseConnection();
         } catch (err) {
             // DB.end();
              DB.releaseConnection();
+            next(err);
+        }
+    },
+
+    getAllEngineers: async (req, res, next) => {
+        try {
+            // Verify the access token
+            const data = verifyToken(req.headers.access_token);
+            if (data?.status) return res.status(data.status).json(data);
+            const all_engineers = await fetchAllEngineers();
+            // DB.end();
+
+            if (all_engineers.length === 0) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'No Engineer Found',
+                });
+            }
+            res.json({
+                status: 200,
+                engineers: all_engineers,
+            });
+            DB.releaseConnection();
+        } catch (err) {
             next(err);
         }
     },
