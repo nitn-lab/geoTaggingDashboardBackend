@@ -430,29 +430,14 @@ export default {
     getAssetsByFilter: async (req, res, next) => {
         try {
             const filterdata = req.body;
-            const Filterkeys=Object.keys(filterdata)
-            var assests;
+            const Filterkeys=Object.entries(filterdata)
+            .map(([key, value]) => `${key}="${value}"`)
+            .join(' and ');
+            // console.log('filterkey',Filterkeys)
             
-            if(Filterkeys[0]=='district'){
-                assests = await fetchAssetsByDistrictOrBlock(filterdata['district'], false);
-            }
-            else if(Filterkeys[0]=='block'){
-                assests = await fetchAssetsByDistrictOrBlock(filterdata['block'], true);
-            }
-            else if(Filterkeys[0]=='id'){
-                assests = await fetchAssetsByIDOrAssetsTagging(filterdata['id'], true);
-            }
-            else if(Filterkeys[0]=='asset_tagging'){
-                assests = await fetchAssetsByIDOrAssetsTagging(filterdata['asset_tagging'], false);
-            }
-            else{
-                return res.status(404).json({
-                    status: 404,
-                    message: 'Please provide district/block/id/asset_tagging in body.',
-                });
-            }
-            
-            if (assests.length === 0) {
+            const assests = await DB.execute(`SELECT asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images,scheme,financial_year,district,block,asset_tagging FROM assets WHERE ${Filterkeys};`);
+
+            if (assests[0].length === 0) {
                 return res.status(404).json({
                     status: 404,
                     message: 'No Assest Found In DB.',
@@ -460,7 +445,7 @@ export default {
             }
             res.json({
                 status: 200,
-                assests: assests,
+                assests: assests[0],
             });
             // DB.end();
             DB.releaseConnection();
@@ -580,5 +565,53 @@ export default {
             next(err);
         }
     },
+    add_scheme: async (req, res, next) => {
+        try {
+            const { scheme_name, financial_year } = req.body;
+            
+
+
+            const [result] = await DB.execute(
+                'INSERT INTO `scheme` (`scheme_name`,`financial_year`) VALUES (?,?)',
+                [scheme_name, financial_year]
+            );
+        
+            res.status(201).json({
+                status: 201,
+                message: 'You have been added a scheme.',
+                block_admin_id: result.insertId,
+            });
+
+             DB.releaseConnection();
+        } catch (err) {
+            // DB.end();
+             DB.releaseConnection();
+            next(err);
+        }
+    },
    
+    create_category: async (req, res, next) => {
+        try {
+            const { category_name  } = req.body;
+            
+
+
+            const [result] = await DB.execute(
+                'INSERT INTO `category` (`category_name`) VALUES (?)',
+                [category_name]
+            );
+        
+            res.status(201).json({
+                status: 201,
+                message: 'You have been created a category.',
+                block_admin_id: result.insertId,
+            });
+
+             DB.releaseConnection();
+        } catch (err) {
+            // DB.end();
+             DB.releaseConnection();
+            next(err);
+        }
+    },
 };

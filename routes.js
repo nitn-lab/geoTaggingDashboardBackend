@@ -164,6 +164,18 @@ routes.post(
     controller.add_block_admin
 )
 
+routes.post(
+  "/add-scheme",
+  validate,
+  controller.add_scheme
+)
+
+routes.post(
+  "/create-category",
+  validate,
+  controller.create_category
+)
+
 // get all district-engineer 
 routes.get("/get-district-engineers", tokenValidation(), validate, controller.getDistrictEngineers);
 
