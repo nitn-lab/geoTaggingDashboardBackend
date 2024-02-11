@@ -176,6 +176,18 @@ routes.post(
   controller.create_category
 )
 
+routes.get(
+  "/get-categories",
+  validate,
+  controller.getCategories
+)
+
+routes.get(
+  "/get-scheme",
+  validate,
+  controller.getSchemes
+)
+
 // get all district-engineer 
 routes.get("/get-district-engineers", tokenValidation(), validate, controller.getDistrictEngineers);
 

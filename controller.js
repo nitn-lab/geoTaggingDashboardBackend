@@ -614,4 +614,51 @@ export default {
             next(err);
         }
     },
+
+    getSchemes: async (req, res, next) => {
+        try {
+            // Verify the access token
+            const data = verifyToken(req.headers.access_token);
+            if (data?.status) return res.status(data.status).json(data);
+            const schemes = await DB.execute('select id,scheme_name,financial_year from scheme;');
+            // DB.end();
+
+            if (schemes[0].length === 0) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'No Scheme Found in DB.',
+                });
+            }
+            res.json({
+                status: 200,
+                schemes: schemes[0],
+            });
+            DB.releaseConnection();
+        } catch (err) {
+            next(err);
+        }
+    },
+    getCategories: async (req, res, next) => {
+        try {
+            // Verify the access token
+            const data = verifyToken(req.headers.access_token);
+            if (data?.status) return res.status(data.status).json(data);
+            const Categories = await DB.execute('select id,category_name from category;');
+            // DB.end();
+
+            if (Categories[0].length === 0) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'No Category Found in DB.',
+                });
+            }
+            res.json({
+                status: 200,
+                Categories: Categories[0],
+            });
+            DB.releaseConnection();
+        } catch (err) {
+            next(err);
+        }
+    },
 };
