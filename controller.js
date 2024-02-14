@@ -155,11 +155,11 @@ export default {
             const isSuperAdmin = await DB.execute(`SELECT isSuperAdmin FROM users WHERE email='${email}';`)
             // console.log(isSuperAdmin[0][0]['isSuperAdmin'])
 
-            if(isSuperAdmin===1){
-            let query = `select name,email,mobile,level,isSuperAdmin,isAdmin,isMobileUser from block_admin where email='${email}'
-            union all select name,email,mobile,level,isSuperAdmin,isAdmin,isMobileUser from district_admin where email='${email}'
-            union all select name,email,mobile,level,isSuperAdmin,isAdmin,isMobileUser from district_engineers where email='${email}'
-            union all select name,email,mobile,level,isSuperAdmin,isAdmin,isMobileUser from block_engineers where email='${email}';`;
+            if(isSuperAdmin[0][0]['isSuperAdmin']===0){
+            let query = `select name,email,mobile,district,block,level,isSuperAdmin,isAdmin,isMobileUser from block_admin where email='${email}'
+            union all select name,email,mobile,district,block,level,isSuperAdmin,isAdmin,isMobileUser from district_admin where email='${email}'
+            union all select name,email,mobile,district,block,level,isSuperAdmin,isAdmin,isMobileUser from district_engineers where email='${email}'
+            union all select name,email,mobile,district,block,level,isSuperAdmin,isAdmin,isMobileUser from block_engineers where email='${email}';`;
             user_data = await DB.execute(query);
             dataLength = user_data[0].length
             }
