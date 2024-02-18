@@ -5,6 +5,8 @@ import { generateToken, verifyToken } from './tokenHandler.js';
 import DB from './dbConnection.js';
 
 
+
+
 const validation_result = validationResult.withDefaults({
     formatter: (error) => error.msg,
 });
@@ -48,13 +50,20 @@ export const fetchAllBlockEngineers = async () => {
     const [row] = await DB.execute(sql);
     return row;
 }
+
+export const fetchAllAdmin = async () => {
+    let sql = 'select * from block_admin union all select * from district_admin;';
+    const [row] = await DB.execute(sql);
+    return row;
+}
+
 export const fetchAllEngineers = async () => {
-    let sql = 'SELECT `name`,`mobile`,`email`,`district` FROM `block_engineers` UNION ALL SELECT `name`,`mobile`,`email`,`district` FROM `district_engineers`';
+    let sql = 'SELECT * FROM `block_engineers` UNION ALL SELECT * FROM `district_engineers`';
     const [row] = await DB.execute(sql);
     return row;
 }
 export const fetchAllAssets = async () => {
-    let sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block` FROM `assets`';
+    let sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block`,`asset_tagging` FROM `assets`';
     const [row] = await DB.execute(sql);
     return row;
 }
@@ -381,6 +390,31 @@ export default {
             next(err);
         }
     },
+
+    getAllAdmin: async (req, res, next) => {
+        try {
+            // Verify the access token
+            const data = verifyToken(req.headers.access_token);
+            if (data?.status) return res.status(data.status).json(data);
+            const all_admins = await fetchAllAdmin();
+            // DB.end();
+
+            if (all_admins.length === 0) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'No Admin Found',
+                });
+            }
+            res.json({
+                status: 200,
+                all_admins: all_admins,
+            });
+            DB.releaseConnection();
+        } catch (err) {
+            next(err);
+        }
+    },
+
     ////////////////////////////////////////////     /* Assets /*    /////////////////////////////////////////////////////////
 
     // add new assests
@@ -435,7 +469,7 @@ export default {
             .join(' and ');
             // console.log('filterkey',Filterkeys)
             
-            const assests = await DB.execute(`SELECT asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images,scheme,financial_year,district,block,asset_tagging FROM assets WHERE ${Filterkeys};`);
+            const assests = await DB.execute(`SELECT asset_name, asset_category, asset_location,asset_price,asset_utilized_price,asset_description,asset_notes,asset_images,scheme,financial_year,district,block,asset_tagging FROM assets WHERE ${Filterkeys};`);
 
             if (assests[0].length === 0) {
                 return res.status(404).json({
@@ -565,6 +599,75 @@ export default {
             next(err);
         }
     },
+
+    update_admin: async (req, res, next) => {
+        try {
+            // const { asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images} = req.body;
+            const updatedData = req.body;
+            const adminID = req.params.id;
+            const level = req.params.level;
+            const convertedString = Object.entries(updatedData)
+            .map(([key, value]) => `${key}="${value}"`)
+            .join(', ');
+
+            // console.log(convertedString)
+            let result=[]
+            let admin_level=""
+            if(level==='1'){
+                result = await DB.execute(`UPDATE district_admin SET ${convertedString} WHERE id = ${adminID}`);
+                admin_level="district"
+            }
+            else if(level==='2'){
+                 result = await DB.execute(`UPDATE block_admin SET ${convertedString} WHERE id = ${adminID}`);
+                 admin_level="block"
+            }
+            // console.log("level",level,typeof(level))
+
+            res.status(201).json({
+                status: 201,
+                message: `You have been successfully updated a ${admin_level} admin.`,
+                updatedID: result.id
+            });
+            // DB.releaseConnection();
+
+        } catch (err) {
+            next(err);
+        }
+    },
+    update_block_district_engineer: async (req, res, next) => {
+        try {
+            // const { asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images} = req.body;
+            const updatedData = req.body;
+            const engineerID = req.params.id;
+            const level = req.params.level;
+            const convertedString = Object.entries(updatedData)
+            .map(([key, value]) => `${key}="${value}"`)
+            .join(', ');
+
+            // console.log(convertedString)
+            let result=[]
+            let engineer_level=""
+            if(level==='3'){
+                result = await DB.execute(`UPDATE district_engineers SET ${convertedString} WHERE id = ${engineerID}`);
+                engineer_level="district"
+            }
+            else if(level==='4'){
+                 result = await DB.execute(`UPDATE block_engineers SET ${convertedString} WHERE id = ${engineerID}`);
+                 engineer_level="block"
+            }
+            // console.log("level",level,typeof(level))
+
+            res.status(201).json({
+                status: 201,
+                message: `You have been successfully updated a ${engineer_level} engineer.`,
+                updatedID: result.id
+            });
+            // DB.releaseConnection();
+
+        } catch (err) {
+            next(err);
+        }
+    },
     add_scheme: async (req, res, next) => {
         try {
             const { scheme_name, financial_year } = req.body;
@@ -661,4 +764,7 @@ export default {
             next(err);
         }
     },
+
+
+
 };

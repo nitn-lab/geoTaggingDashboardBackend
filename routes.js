@@ -195,7 +195,12 @@ routes.get("/get-block-engineers",tokenValidation(), validate, controller.getBlo
 
 routes.get("/get-assets",tokenValidation(), validate, controller.getAssets);
 
-routes.put('/update-asset/:id',validate,controller.update_asset)
+routes.put('/update-asset/:id',validate,controller.update_asset);
 
+routes.put('/update-admin/:id/:level',validate,controller.update_admin); 
+
+routes.put('/update-engineer/:id/:level',validate,controller.update_block_district_engineer); 
+
+routes.get('/all-admin',validate,controller.getAllAdmin);
 
 export default routes;
