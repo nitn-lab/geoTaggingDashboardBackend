@@ -145,6 +145,18 @@ routes.post(
   controller.getAssetsByFilter
 )
 
+routes.post(
+  "/get-district-engineers-by-filter",
+  validate,
+  controller.getDistrictEngineersByFilter
+)
+
+routes.post(
+  "/get-block-engineers-by-filter",
+  validate,
+  controller.getBlockEngineersByFilter
+)
+
 routes.get(
   "/fetchAllEngineers",
   validate,

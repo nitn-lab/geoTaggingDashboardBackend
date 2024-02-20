@@ -52,18 +52,18 @@ export const fetchAllBlockEngineers = async () => {
 }
 
 export const fetchAllAdmin = async () => {
-    let sql = 'select * from block_admin union all select * from district_admin;';
+    let sql = 'select id,name,email,mobile,district,block,password,level,isAdmin,isMobileUser,isSuperAdmin from block_admin union all select  id,name,email,mobile,district,block,password,level,isAdmin,isMobileUser,isSuperAdmin from district_admin;';
     const [row] = await DB.execute(sql);
     return row;
 }
 
 export const fetchAllEngineers = async () => {
-    let sql = 'SELECT * FROM `block_engineers` UNION ALL SELECT * FROM `district_engineers`';
+    let sql = 'select id,name,email,mobile,district,block,password,level,isAdmin,isMobileUser,isSuperAdmin from district_engineers union all select  id,name,email,mobile,district,block,password,level,isAdmin,isMobileUser,isSuperAdmin from block_engineers;';
     const [row] = await DB.execute(sql);
     return row;
 }
 export const fetchAllAssets = async () => {
-    let sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block`,`asset_tagging` FROM `assets`';
+    let sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block`,`asset_tagging`, `asset_utilized_price` FROM `assets`';
     const [row] = await DB.execute(sql);
     return row;
 }
@@ -487,6 +487,62 @@ export default {
             next(err);
         }
     },    
+
+    getDistrictEngineersByFilter: async (req, res, next) => {
+        try {
+            const filterdata = req.body;
+            const Filterkeys=Object.entries(filterdata)
+            .map(([key, value]) => `${key}="${value}"`)
+            .join(' and ');
+            // console.log('filterkey',Filterkeys)
+            
+            const engineers = await DB.execute(`SELECT id,name,email,mobile,district,block,password,level,isAdmin,isMobileUser,isSuperAdmin FROM district_engineers WHERE ${Filterkeys};`);
+
+            if (engineers[0].length === 0) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'No District Engineer Found In DB.',
+                });
+            }
+            res.json({
+                status: 200,
+                engineers: engineers[0],
+            });
+            // DB.end();
+            DB.releaseConnection();
+        } catch (err) {
+            next(err);
+        }
+    }, 
+
+    // block_engineers
+
+    getBlockEngineersByFilter: async (req, res, next) => {
+        try {
+            const filterdata = req.body;
+            const Filterkeys=Object.entries(filterdata)
+            .map(([key, value]) => `${key}="${value}"`)
+            .join(' and ');
+            // console.log('filterkey',Filterkeys)
+            
+            const block_engineers = await DB.execute(`SELECT id,name,email,mobile,district,block,password,level,isAdmin,isMobileUser,isSuperAdmin FROM block_engineers WHERE ${Filterkeys};`);
+
+            if (block_engineers[0].length === 0) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'No Block Engineer Found In DB.',
+                });
+            }
+            res.json({
+                status: 200,
+                block_engineers: block_engineers[0],
+            });
+            // DB.end();
+            DB.releaseConnection();
+        } catch (err) {
+            next(err);
+        }
+    },
     update_asset: async (req, res, next) => {
         try {
             // const { asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images} = req.body;
