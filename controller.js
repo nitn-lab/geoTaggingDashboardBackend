@@ -180,8 +180,8 @@ export default {
             // console.log("user_data",Object.keys(user_data).length)
             // console.log(user_data)
             if (dataLength !== 1) {
-                return res.status(404).json({
-                    status: 404,
+                return res.status(200).json({
+                    status: 200,
                     message: 'User not found',
                 });
             }
@@ -211,8 +211,8 @@ export default {
             // fetching user by the `id` (column)
             const user = await fetchUserByEmailOrID(data.id, false);
             if (user.length !== 1) {
-                return res.status(404).json({
-                    status: 404,
+                return res.status(200).json({
+                    status: 200,
                     message: 'User not found',
                 });
             }
@@ -353,8 +353,8 @@ export default {
             const engineer = await fetchAllDistrictEngineers();
             // DB.end();
             if (engineer.length === 0) {
-                return res.status(404).json({
-                    status: 404,
+                return res.status(200).json({
+                    status: 200,
                     message: 'No District Engineer found',
                 });
             }
@@ -376,8 +376,8 @@ export default {
             // DB.end();
 
             if (block_engineer.length === 0) {
-                return res.status(404).json({
-                    status: 404,
+                return res.status(200).json({
+                    status: 200,
                     message: 'No Block Engineer found',
                 });
             }
@@ -400,8 +400,8 @@ export default {
             // DB.end();
 
             if (all_admins.length === 0) {
-                return res.status(404).json({
-                    status: 404,
+                return res.status(200).json({
+                    status: 200,
                     message: 'No Admin Found',
                 });
             }
@@ -447,8 +447,8 @@ export default {
             // DB.end();
 
             if (assets.length === 0) {
-                return res.status(404).json({
-                    status: 404,
+                return res.status(200).json({
+                    status: 200,
                     message: 'No Assest Found in DB.',
                 });
             }
@@ -472,8 +472,8 @@ export default {
             const assests = await DB.execute(`SELECT asset_name, asset_category, asset_location,asset_price,asset_utilized_price,asset_description,asset_notes,asset_images,scheme,financial_year,district,block,asset_tagging FROM assets WHERE ${Filterkeys};`);
 
             if (assests[0].length === 0) {
-                return res.status(404).json({
-                    status: 404,
+                return res.status(200).json({
+                    status: 200,
                     message: 'No Assest Found In DB.',
                 });
             }
@@ -499,8 +499,8 @@ export default {
             const engineers = await DB.execute(`SELECT id,name,email,mobile,district,block,password,level,isAdmin,isMobileUser,isSuperAdmin FROM district_engineers WHERE ${Filterkeys};`);
 
             if (engineers[0].length === 0) {
-                return res.status(404).json({
-                    status: 404,
+                return res.status(200).json({
+                    status: 200,
                     message: 'No District Engineer Found In DB.',
                 });
             }
@@ -528,8 +528,8 @@ export default {
             const block_engineers = await DB.execute(`SELECT id,name,email,mobile,district,block,password,level,isAdmin,isMobileUser,isSuperAdmin FROM block_engineers WHERE ${Filterkeys};`);
 
             if (block_engineers[0].length === 0) {
-                return res.status(404).json({
-                    status: 404,
+                return res.status(200).json({
+                    status: 200,
                     message: 'No Block Engineer Found In DB.',
                 });
             }
@@ -543,6 +543,62 @@ export default {
             next(err);
         }
     },
+
+
+    getDistrictAdminByFilter: async (req, res, next) => {
+        try {
+            const filterdata = req.body;
+            const Filterkeys=Object.entries(filterdata)
+            .map(([key, value]) => `${key}="${value}"`)
+            .join(' and ');
+            // console.log('filterkey',Filterkeys)
+            
+            const district = await DB.execute(`SELECT id,name,email,mobile,district,block,password,level,isAdmin,isMobileUser,isSuperAdmin FROM district_admin WHERE ${Filterkeys};`);
+
+            if (district[0].length === 0) {
+                return res.status(200).json({
+                    status: 200,
+                    message: 'No District Engineer Found In DB.',
+                });
+            }
+            res.json({
+                status: 200,
+                district: district[0],
+            });
+            // DB.end();
+            DB.releaseConnection();
+        } catch (err) {
+            next(err);
+        }
+    }, 
+
+    getBlockByAdminFilter: async (req, res, next) => {
+        try {
+            const filterdata = req.body;
+            const Filterkeys=Object.entries(filterdata)
+            .map(([key, value]) => `${key}="${value}"`)
+            .join(' and ');
+            // console.log('filterkey',Filterkeys)
+            
+            const block = await DB.execute(`SELECT id,name,email,mobile,district,block,password,level,isAdmin,isMobileUser,isSuperAdmin FROM block_admin WHERE ${Filterkeys};`);
+
+            if (block[0].length === 0) {
+                return res.status(200).json({
+                    status: 200,
+                    message: 'No Block Engineer Found In DB.',
+                });
+            }
+            res.json({
+                status: 200,
+                block: block[0],
+            });
+            // DB.end();
+            DB.releaseConnection();
+        } catch (err) {
+            next(err);
+        }
+    },
+
     update_asset: async (req, res, next) => {
         try {
             // const { asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images} = req.body;
@@ -641,8 +697,8 @@ export default {
             // DB.end();
 
             if (all_engineers.length === 0) {
-                return res.status(404).json({
-                    status: 404,
+                return res.status(200).json({
+                    status: 200,
                     message: 'No Engineer Found',
                 });
             }
@@ -783,8 +839,8 @@ export default {
             // DB.end();
 
             if (schemes[0].length === 0) {
-                return res.status(404).json({
-                    status: 404,
+                return res.status(200).json({
+                    status: 200,
                     message: 'No Scheme Found in DB.',
                 });
             }
@@ -806,8 +862,8 @@ export default {
             // DB.end();
 
             if (Categories[0].length === 0) {
-                return res.status(404).json({
-                    status: 404,
+                return res.status(200).json({
+                    status: 200,
                     message: 'No Category Found in DB.',
                 });
             }

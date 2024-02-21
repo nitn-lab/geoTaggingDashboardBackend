@@ -151,10 +151,24 @@ routes.post(
   controller.getDistrictEngineersByFilter
 )
 
+
+
 routes.post(
   "/get-block-engineers-by-filter",
   validate,
   controller.getBlockEngineersByFilter
+)
+
+routes.post(
+  "/get-district-admin-by-filter",
+  validate,
+  controller.getDistrictAdminByFilter
+)
+
+routes.post(
+  "/get-block-admin-by-filter",
+  validate,
+  controller.getBlockByAdminFilter
 )
 
 routes.get(
