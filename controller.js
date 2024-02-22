@@ -878,5 +878,104 @@ export default {
     },
 
 
+    update_category: async (req, res, next) => {
+        try {
+            // const { asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images} = req.body;
+            const updatedData = req.body;
+            const ID = req.params.id;
+            const convertedString = Object.entries(updatedData)
+            .map(([key, value]) => `${key}="${value}"`)
+            .join(', ');
 
+            // console.log(convertedString)
+
+            const [result] = await DB.execute(`UPDATE category SET ${convertedString} WHERE id = ${ID}`);
+
+            // console.log('result1',result1)
+            res.status(201).json({
+                status: 201,
+                message: 'You have been successfully updated a category.',
+                asset_id: result.insertId,
+            });
+            DB.releaseConnection();
+
+        } catch (err) {
+            next(err);
+        }
+    },
+    update_scheme: async (req, res, next) => {
+        try {
+            // const { asset_name, asset_scheme, asset_location,asset_price,asset_description,asset_notes,asset_images} = req.body;
+            const updatedData = req.body;
+            const ID = req.params.id;
+            const convertedString = Object.entries(updatedData)
+            .map(([key, value]) => `${key}="${value}"`)
+            .join(', ');
+
+            // console.log(convertedString)
+
+            const [result] = await DB.execute(`UPDATE scheme SET ${convertedString} WHERE id = ${ID}`);
+
+            // console.log('result1',result1)
+            res.status(201).json({
+                status: 201,
+                message: 'You have been successfully updated a scheme.',
+                asset_id: result.insertId,
+            });
+            DB.releaseConnection();
+
+        } catch (err) {
+            next(err);
+        }
+    },
+    delete_category: async (req, res, next) => {
+        try {
+            // DELETE FROM category WHERE CustomerName='Alfreds Futterkiste'; const { asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images} = req.body;
+            const updatedData = req.body;
+            const ID = req.params.id;
+            const convertedString = Object.entries(updatedData)
+            .map(([key, value]) => `${key}="${value}"`)
+            .join(', ');
+
+            // console.log(convertedString)
+
+            const [result] = await DB.execute(`DELETE FROM category WHERE id = ${ID}`);
+
+            // console.log('result1',result1)
+            res.status(201).json({
+                status: 201,
+                message: 'You have been successfully deleted a category.',
+                asset_id: result.insertId,
+            });
+            DB.releaseConnection();
+
+        } catch (err) {
+            next(err);
+        }
+    },
+    delete_scheme: async (req, res, next) => {
+        try {
+            // const { asset_name, asset_scheme, asset_location,asset_price,asset_description,asset_notes,asset_images} = req.body;
+            const updatedData = req.body;
+            const ID = req.params.id;
+            const convertedString = Object.entries(updatedData)
+            .map(([key, value]) => `${key}="${value}"`)
+            .join(', ');
+
+            // console.log(convertedString)
+
+            const [result] = await DB.execute(`DELETE FROM scheme WHERE id = ${ID}`);
+
+            // console.log('result1',result1)
+            res.status(201).json({
+                status: 201,
+                message: 'You have been successfully deleted a scheme.',
+                asset_id: result.insertId,
+            });
+            DB.releaseConnection();
+
+        } catch (err) {
+            next(err);
+        }
+    },
 };

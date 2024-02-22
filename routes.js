@@ -223,6 +223,14 @@ routes.get("/get-assets",tokenValidation(), validate, controller.getAssets);
 
 routes.put('/update-asset/:id',validate,controller.update_asset);
 
+routes.put('/update-category/:id',validate,controller.update_category);
+
+routes.put('/update-scheme/:id',validate,controller.update_scheme);
+
+routes.delete('/delete-category/:id',validate,controller.delete_category);
+
+routes.delete('/delete-scheme/:id',validate,controller.delete_scheme);
+
 routes.put('/update-admin/:id/:level',validate,controller.update_admin); 
 
 routes.put('/update-engineer/:id/:level',validate,controller.update_block_district_engineer); 
