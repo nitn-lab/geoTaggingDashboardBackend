@@ -237,4 +237,10 @@ routes.put('/update-engineer/:id/:level',validate,controller.update_block_distri
 
 routes.get('/all-admin',validate,controller.getAllAdmin);
 
+routes.post('/delete-assets',validate,controller.delete_assets);
+
+routes.post('/delete-district-engineers',validate,controller.delete_district_engineers);
+
+routes.post('/delete-block-engineers',validate,controller.delete_block_engineers);
+
 export default routes;

@@ -4,6 +4,7 @@ import { config } from 'dotenv';
 const connection = () => {
     config();
     const { DB_HOST, DB_NAME, DB_USER, DB_PASSWORD } = process.env;
+    console.log("connnnn", DB_HOST, DB_NAME, DB_USER, DB_PASSWORD)
     return mysql.createPool({
         host: DB_HOST,
         user: DB_USER,

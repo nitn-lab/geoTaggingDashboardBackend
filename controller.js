@@ -624,7 +624,79 @@ export default {
             next(err);
         }
     },
+    delete_assets: async (req, res, next) => {
+        try {
 
+            var assetIds = req.body.data;
+            assetIds=assetIds.sort()
+            // console.log(assetIds,'assetIDs')
+            assetIds=assetIds.toString()
+            // let query=`DELETE FROM assets WHERE id IN (${assetIds})`
+            // console.log(query,'assetIDs')
+            const [result] = await DB.execute(`DELETE FROM assets WHERE id IN (${assetIds})`);
+
+            // console.log('result1',result1)
+            res.status(201).json({
+                status: 201,
+                message: `You have been successfully deleted assets range between(${assetIds}) .`,
+                asset_id: result,
+            });
+            DB.releaseConnection();
+
+        } catch (err) {
+            next(err);
+        }
+    },
+
+// district_engineers
+    delete_district_engineers: async (req, res, next) => {
+        try {
+            var emails=[]
+            var IDs = req.body.data;
+            IDs=IDs.sort()
+            IDs=IDs.toString()
+            var [result1] = await DB.execute(`SELECT email FROM district_engineers WHERE id IN (${IDs})`);
+            for (let index = 0; index < result1.length; index++) {
+                var val = "'"+result1[index]['email']+"'"
+                emails.push(val)
+            }    	
+            const [result2] = await DB.execute(`DELETE FROM users WHERE email IN (${emails})`);
+            const [result] = await DB.execute(`DELETE FROM district_engineers WHERE id IN (${IDs})`);
+            res.status(201).json({
+                status: 201,
+                message: `You have been successfully deleted district Engineers range between(${IDs}).`,
+                deleteID: result,
+            });
+            DB.releaseConnection();
+
+        } catch (err) {
+            next(err);
+        }
+    },
+    delete_block_engineers: async (req, res, next) => {
+        try {
+            var emails=[]
+            var IDs = req.body.data;
+            IDs=IDs.sort()
+            IDs=IDs.toString()
+            var [result1] = await DB.execute(`SELECT email FROM block_engineers WHERE id IN (${IDs})`);
+            for (let index = 0; index < result1.length; index++) {
+                var val = "'"+result1[index]['email']+"'"
+                emails.push(val)
+            }    	
+            const [result2] = await DB.execute(`DELETE FROM users WHERE email IN (${emails})`);
+            const [result] = await DB.execute(`DELETE FROM block_engineers WHERE id IN (${IDs})`);
+            res.status(201).json({
+                status: 201,
+                message: `You have been successfully deleted block Engineers range between(${IDs}).`,
+                deleteID: result,
+            });
+            DB.releaseConnection();
+
+        } catch (err) {
+            next(err);
+        }
+    },
     // add district admin 
     add_district_admin: async (req, res, next) => {
         try {
