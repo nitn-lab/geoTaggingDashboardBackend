@@ -243,4 +243,12 @@ routes.post('/delete-district-engineers',validate,controller.delete_district_eng
 
 routes.post('/delete-block-engineers',validate,controller.delete_block_engineers);
 
+routes.post('/delete-bulk-category',validate,controller.delete_bulk_category);
+
+routes.post('/delete-bulk-scheme',validate,controller.delete_bulk_scheme);
+
+routes.post('/delete-block-admin',validate,controller.delete_block_admin);
+
+routes.post('/delete-district-admin',validate,controller.delete_district_admin);
+
 export default routes;

@@ -63,7 +63,7 @@ export const fetchAllEngineers = async () => {
     return row;
 }
 export const fetchAllAssets = async () => {
-    let sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block`,`asset_tagging`, `asset_utilized_price` FROM `assets`';
+    let sql = 'SELECT `id`,`asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block`,`asset_tagging`, `asset_utilized_price` FROM `assets`';
     const [row] = await DB.execute(sql);
     return row;
 }
@@ -469,7 +469,7 @@ export default {
             .join(' and ');
             // console.log('filterkey',Filterkeys)
             
-            const assests = await DB.execute(`SELECT asset_name, asset_category, asset_location,asset_price,asset_utilized_price,asset_description,asset_notes,asset_images,scheme,financial_year,district,block,asset_tagging FROM assets WHERE ${Filterkeys};`);
+            const assests = await DB.execute(`SELECT id,asset_name, asset_category, asset_location,asset_price,asset_utilized_price,asset_description,asset_notes,asset_images,scheme,financial_year,district,block,asset_tagging FROM assets WHERE ${Filterkeys};`);
 
             if (assests[0].length === 0) {
                 return res.status(200).json({
@@ -647,7 +647,48 @@ export default {
             next(err);
         }
     },
+    delete_bulk_category: async (req, res, next) => {
+        try {
 
+            var categoryID = req.body.data;
+            categoryID=categoryID.sort()
+            
+            categoryID=categoryID.toString()
+
+            const [result] = await DB.execute(`DELETE FROM category WHERE id IN (${categoryID})`);
+
+            res.status(201).json({
+                status: 201,
+                message: `You have been successfully deleted category range between(${categoryID}) .`,
+                asset_id: result,
+            });
+            DB.releaseConnection();
+
+        } catch (err) {
+            next(err);
+        }
+    },
+    delete_bulk_scheme: async (req, res, next) => {
+        try {
+
+            var schemeID = req.body.data;
+            schemeID=schemeID.sort()
+            
+            schemeID=schemeID.toString()
+
+            const [result] = await DB.execute(`DELETE FROM scheme WHERE id IN (${schemeID})`);
+
+            res.status(201).json({
+                status: 201,
+                message: `You have been successfully deleted scheme range between(${schemeID}) .`,
+                asset_id: result,
+            });
+            DB.releaseConnection();
+
+        } catch (err) {
+            next(err);
+        }
+    },    
 // district_engineers
     delete_district_engineers: async (req, res, next) => {
         try {
@@ -689,6 +730,54 @@ export default {
             res.status(201).json({
                 status: 201,
                 message: `You have been successfully deleted block Engineers range between(${IDs}).`,
+                deleteID: result,
+            });
+            DB.releaseConnection();
+
+        } catch (err) {
+            next(err);
+        }
+    },
+    delete_district_admin: async (req, res, next) => {
+        try {
+            var emails=[]
+            var IDs = req.body.data;
+            IDs=IDs.sort()
+            IDs=IDs.toString()
+            var [result1] = await DB.execute(`SELECT email FROM district_admin WHERE id IN (${IDs})`);
+            for (let index = 0; index < result1.length; index++) {
+                var val = "'"+result1[index]['email']+"'"
+                emails.push(val)
+            }    	
+            const [result2] = await DB.execute(`DELETE FROM users WHERE email IN (${emails})`);
+            const [result] = await DB.execute(`DELETE FROM district_admin WHERE id IN (${IDs})`);
+            res.status(201).json({
+                status: 201,
+                message: `You have been successfully deleted district Admin range between(${IDs}).`,
+                deleteID: result,
+            });
+            DB.releaseConnection();
+
+        } catch (err) {
+            next(err);
+        }
+    },
+    delete_block_admin: async (req, res, next) => {
+        try {
+            var emails=[]
+            var IDs = req.body.data;
+            IDs=IDs.sort()
+            IDs=IDs.toString()
+            var [result1] = await DB.execute(`SELECT email FROM block_admin WHERE id IN (${IDs})`);
+            for (let index = 0; index < result1.length; index++) {
+                var val = "'"+result1[index]['email']+"'"
+                emails.push(val)
+            }    	
+            const [result2] = await DB.execute(`DELETE FROM users WHERE email IN (${emails})`);
+            const [result] = await DB.execute(`DELETE FROM block_admin WHERE id IN (${IDs})`);
+            res.status(201).json({
+                status: 201,
+                message: `You have been successfully deleted block admin range between(${IDs}).`,
                 deleteID: result,
             });
             DB.releaseConnection();
@@ -790,19 +879,40 @@ export default {
             const updatedData = req.body;
             const adminID = req.params.id;
             const level = req.params.level;
-            const convertedString = Object.entries(updatedData)
-            .map(([key, value]) => `${key}="${value}"`)
-            .join(', ');
+            const convertedString = await Promise.all(Object.entries(updatedData)
+            .map(async([key, value]) => {
+                if(key==='password'){
+                    
+                    const saltRounds = 10;
+                    const hashPassword = await bcrypt.hash(value, saltRounds);
+                    if(level==='3'){
+                        const [usr_email]= await DB.execute(`SELECT email FROM district_admin WHERE id = ${engineerID}`)
+                        
+                        const district_res = await DB.execute(`UPDATE users SET password='${hashPassword}' where email='${usr_email[0].email}'`)
+                    }
+                    else if(level==='4'){
+                        const [usr_email_block]= await DB.execute(`SELECT email FROM block_admin WHERE id = ${engineerID}`)
+                        const block_res = await DB.execute(`UPDATE users SET password='${hashPassword}' where email='${usr_email_block[0].email}'`)
+                    }
+                    else{
+                        message="Please Provide Level"
+                    }
+                    return `${key}="${hashPassword}"`
+                }
+                else{return `${key}="${value}"`}
+            }))
+           
+            const convertedStringQuery=convertedString.join(', ');
 
             // console.log(convertedString)
             let result=[]
             let admin_level=""
             if(level==='1'){
-                result = await DB.execute(`UPDATE district_admin SET ${convertedString} WHERE id = ${adminID}`);
+                result = await DB.execute(`UPDATE district_admin SET ${convertedStringQuery} WHERE id = ${adminID}`);
                 admin_level="district"
             }
             else if(level==='2'){
-                 result = await DB.execute(`UPDATE block_admin SET ${convertedString} WHERE id = ${adminID}`);
+                 result = await DB.execute(`UPDATE block_admin SET ${convertedStringQuery} WHERE id = ${adminID}`);
                  admin_level="block"
             }
             // console.log("level",level,typeof(level))
@@ -824,26 +934,53 @@ export default {
             const updatedData = req.body;
             const engineerID = req.params.id;
             const level = req.params.level;
-            const convertedString = Object.entries(updatedData)
-            .map(([key, value]) => `${key}="${value}"`)
-            .join(', ');
-
-            // console.log(convertedString)
+            var message=""
+            const convertedString = await Promise.all(Object.entries(updatedData)
+            .map(async([key, value]) => {
+                if(key==='password'){
+                    
+                    const saltRounds = 10;
+                    const hashPassword = await bcrypt.hash(value, saltRounds);
+                    if(level==='3'){
+                        const [usr_email]= await DB.execute(`SELECT email FROM district_engineers WHERE id = ${engineerID}`)
+                        
+                        const district_res = await DB.execute(`UPDATE users SET password='${hashPassword}' where email='${usr_email[0].email}'`)
+                    }
+                    else if(level==='4'){
+                        const [usr_email_block]= await DB.execute(`SELECT email FROM block_engineers WHERE id = ${engineerID}`)
+                        const block_res = await DB.execute(`UPDATE users SET password='${hashPassword}' where email='${usr_email_block[0].email}'`)
+                    }
+                    else{
+                        message="Please Provide Level"
+                    }
+                    return `${key}="${hashPassword}"`
+                }
+                else{return `${key}="${value}"`}
+            }))
+           
+            const convertedStringQuery=convertedString.join(', ');
+            console.log(convertedStringQuery)
             let result=[]
             let engineer_level=""
             if(level==='3'){
-                result = await DB.execute(`UPDATE district_engineers SET ${convertedString} WHERE id = ${engineerID}`);
+
+                result = await DB.execute(`UPDATE district_engineers SET ${convertedStringQuery} WHERE id = ${engineerID}`);
                 engineer_level="district"
+                message=`You have been successfully updated a ${engineer_level} engineer.`
             }
             else if(level==='4'){
-                 result = await DB.execute(`UPDATE block_engineers SET ${convertedString} WHERE id = ${engineerID}`);
+                 result = await DB.execute(`UPDATE block_engineers SET ${convertedStringQuery} WHERE id = ${engineerID}`);
                  engineer_level="block"
+                 message=`You have been successfully updated a ${engineer_level} engineer.`
+            }
+            else{
+                message=`Please Provide Level.`
             }
             // console.log("level",level,typeof(level))
 
             res.status(201).json({
                 status: 201,
-                message: `You have been successfully updated a ${engineer_level} engineer.`,
+                message: message,
                 updatedID: result.id
             });
             // DB.releaseConnection();
