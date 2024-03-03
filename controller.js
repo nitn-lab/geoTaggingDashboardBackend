@@ -94,7 +94,6 @@ export const fetchAssetsByIDOrAssetsTagging = async (data, idID) => {
 
 
 
-
 export default {
 
     signup: async (req, res, next) => {
@@ -544,6 +543,32 @@ export default {
         }
     },
 
+    getDistrictAndBlockEngineersByFilter: async (req, res, next) => {
+        try {
+            const filterdata = req.body;
+            const Filterkeys=Object.entries(filterdata)
+            .map(([key, value]) => `${key}="${value}"`)
+            .join(' and ');
+            // console.log('filterkey',Filterkeys)
+            
+            const engineers = await DB.execute(`select id,name,email,mobile,district,block,password,level,isAdmin,isMobileUser,isSuperAdmin from block_engineers where ${Filterkeys} union all select id,name,email,mobile,district,block,password,level,isAdmin,isMobileUser,isSuperAdmin from district_engineers where ${Filterkeys};`);
+
+            if (engineers[0].length === 0) {
+                return res.status(200).json({
+                    status: 200,
+                    message: 'No Engineer Found In DB.',
+                });
+            }
+            res.json({
+                status: 200,
+                engineers: engineers[0],
+            });
+            // DB.end();
+            DB.releaseConnection();
+        } catch (err) {
+            next(err);
+        }
+    }, 
 
     getDistrictAdminByFilter: async (req, res, next) => {
         try {
@@ -879,25 +904,43 @@ export default {
             const updatedData = req.body;
             const adminID = req.params.id;
             const level = req.params.level;
+            var message=""
             const convertedString = await Promise.all(Object.entries(updatedData)
             .map(async([key, value]) => {
                 if(key==='password'){
                     
                     const saltRounds = 10;
                     const hashPassword = await bcrypt.hash(value, saltRounds);
-                    if(level==='3'){
-                        const [usr_email]= await DB.execute(`SELECT email FROM district_admin WHERE id = ${engineerID}`)
+                    if(level==='1'){
+                        const [usr_email]= await DB.execute(`SELECT email FROM district_admin WHERE id = ${adminID}`)
                         
                         const district_res = await DB.execute(`UPDATE users SET password='${hashPassword}' where email='${usr_email[0].email}'`)
                     }
-                    else if(level==='4'){
-                        const [usr_email_block]= await DB.execute(`SELECT email FROM block_admin WHERE id = ${engineerID}`)
+                    else if(level==='2'){
+                        const [usr_email_block]= await DB.execute(`SELECT email FROM block_admin WHERE id = ${adminID}`)
                         const block_res = await DB.execute(`UPDATE users SET password='${hashPassword}' where email='${usr_email_block[0].email}'`)
                     }
                     else{
                         message="Please Provide Level"
                     }
                     return `${key}="${hashPassword}"`
+                }
+                else if(key==='email'){
+                    
+                   
+                    if(level==='1'){
+                        const [usr_email]= await DB.execute(`SELECT email FROM district_admin WHERE id = ${adminID}`)
+                        
+                        const district_res = await DB.execute(`UPDATE users SET email='${value}' where email='${usr_email[0].email}'`)
+                    }
+                    else if(level==='2'){
+                        const [usr_email_block]= await DB.execute(`SELECT email FROM block_admin WHERE id = ${adminID}`)
+                        const block_res = await DB.execute(`UPDATE users SET email='${value}' where email='${usr_email_block[0].email}'`)
+                    }
+                    else{
+                        message="Please Provide Level"
+                    }
+                    return `${key}="${value}"`
                 }
                 else{return `${key}="${value}"`}
             }))
@@ -910,16 +953,18 @@ export default {
             if(level==='1'){
                 result = await DB.execute(`UPDATE district_admin SET ${convertedStringQuery} WHERE id = ${adminID}`);
                 admin_level="district"
+                message=`You have been successfully updated a ${admin_level} admin.`
             }
             else if(level==='2'){
                  result = await DB.execute(`UPDATE block_admin SET ${convertedStringQuery} WHERE id = ${adminID}`);
                  admin_level="block"
+                 message=`You have been successfully updated a ${admin_level} admin.`
             }
             // console.log("level",level,typeof(level))
 
             res.status(201).json({
                 status: 201,
-                message: `You have been successfully updated a ${admin_level} admin.`,
+                message: message,
                 updatedID: result.id
             });
             // DB.releaseConnection();
@@ -945,15 +990,34 @@ export default {
                         const [usr_email]= await DB.execute(`SELECT email FROM district_engineers WHERE id = ${engineerID}`)
                         
                         const district_res = await DB.execute(`UPDATE users SET password='${hashPassword}' where email='${usr_email[0].email}'`)
+                        console.log(district_res,'disLOG')
                     }
                     else if(level==='4'){
                         const [usr_email_block]= await DB.execute(`SELECT email FROM block_engineers WHERE id = ${engineerID}`)
                         const block_res = await DB.execute(`UPDATE users SET password='${hashPassword}' where email='${usr_email_block[0].email}'`)
+                        console.log(block_res,'blockLOG')
                     }
                     else{
                         message="Please Provide Level"
                     }
                     return `${key}="${hashPassword}"`
+                }
+                else if(key==='email'){
+                    
+                    if(level==='3'){
+                        const [usr_email]= await DB.execute(`SELECT email FROM district_engineers WHERE id = ${engineerID}`)
+                        const district_res = await DB.execute(`UPDATE users SET email='${value}' where email='${usr_email[0].email}'`)
+                        console.log("district_res_email",district_res)
+                    }
+                    else if(level==='4'){
+                        const [usr_email_block]= await DB.execute(`SELECT email FROM block_engineers WHERE id = ${engineerID}`)
+                        const block_res = await DB.execute(`UPDATE users SET email='${value}' where email='${usr_email_block[0].email}'`)
+                        console.log("block_res_email",block_res)
+                    }
+                    else{
+                        message="Please Provide Level"
+                    }
+                    return `${key}="${value}"`
                 }
                 else{return `${key}="${value}"`}
             }))
@@ -1038,7 +1102,99 @@ export default {
             next(err);
         }
     },
+    create_financial_year: async (req, res, next) => {
+        try {
+            const { financial_year  } = req.body;
+            
 
+
+            const [result] = await DB.execute(
+                'INSERT INTO `financial_year` (`financial_year`) VALUES (?)',
+                [financial_year]
+            );
+        
+            res.status(201).json({
+                status: 201,
+                message: 'You have been created a Financial Year.',
+                created_id: result.insertId,
+            });
+
+             DB.releaseConnection();
+        } catch (err) {
+            // DB.end();
+             DB.releaseConnection();
+            next(err);
+        }
+    },
+    update_financial_year: async (req, res, next) => {
+        try {
+            // const { asset_name, asset_scheme, asset_location,asset_price,asset_description,asset_notes,asset_images} = req.body;
+            const updatedData = req.body;
+            const ID = req.params.id;
+            const convertedString = Object.entries(updatedData)
+            .map(([key, value]) => `${key}="${value}"`)
+            .join(', ');
+
+            // console.log(convertedString)
+
+            const [result] = await DB.execute(`UPDATE financial_year SET ${convertedString} WHERE id = ${ID}`);
+
+            // console.log('result1',result1)
+            res.status(201).json({
+                status: 201,
+                message: 'You have been successfully updated a financial year.',
+                asset_id: result.insertId,
+            });
+            DB.releaseConnection();
+
+        } catch (err) {
+            next(err);
+        }
+    },
+    delete_financial_year: async (req, res, next) => {
+        try {
+            // DELETE FROM category WHERE CustomerName='Alfreds Futterkiste'; const { asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images} = req.body;
+            const updatedData = req.body;
+            const ID = req.params.id;
+  
+
+            const [result] = await DB.execute(`DELETE FROM financial_year WHERE id = ${ID}`);
+
+            // console.log('result1',result1)
+            res.status(201).json({
+                status: 201,
+                message: 'You have been successfully deleted a Financial Year.',
+                asset_id: result.insertId,
+            });
+            DB.releaseConnection();
+
+        } catch (err) {
+            next(err);
+        }
+    },
+    getFinancialyear: async (req, res, next) => {
+        try {
+            // Verify the access token
+            const data = verifyToken(req.headers.access_token);
+            if (data?.status) return res.status(data.status).json(data);
+            const financial_year = await DB.execute('select id,financial_year from financial_year;');
+            // DB.end();
+
+            if (financial_year[0].length === 0) {
+                return res.status(200).json({
+                    status: 200,
+                    message: 'No Financial Year Found in DB.',
+                });
+            }
+            res.json({
+                status: 200,
+                schemes: financial_year[0],
+            });
+            DB.releaseConnection();
+        } catch (err) {
+            next(err);
+        }
+    },
     getSchemes: async (req, res, next) => {
         try {
             // Verify the access token
