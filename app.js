@@ -90,14 +90,16 @@ const storage = multer.diskStorage({
       cb(null, 'videos/'); 
     },
     filename: function (req, file, cb) {
-        let originalname = new Date().getDate()+new Date().getTime()+'_'+sanitizeFilename(file.originalname) 
+        console.log("fileNN",file)
+        let originalname = sanitizeFilename(file.originalname) 
       cb(null, originalname); 
     }
   });
 
 const _upload = multer({ storage: storage });
 
-app.post('/upload_new', _upload.single('file'), (req, res) => {
+app.post('/upload-video', _upload.single('file'), (req, res) => {
+    console.log("filename",req.file.originalname)
     if (!req.file || path.extname(req.file.originalname).toLowerCase() !== '.mp4') {
         return res.status(400).send('Only .mp4 files are allowed');
     }
@@ -107,7 +109,7 @@ app.post('/upload_new', _upload.single('file'), (req, res) => {
     // let ress=
     res.status(201).json({
         Response:'Video uploaded successfully',
-         fileName:new Date().getDate()+new Date().getTime()+'_'+sanitizeFilename(req.file.originalname)
+        fileName:new Date().getDate()+new Date().getTime()+'_'+sanitizeFilename(req.file.originalname)
         });
     // res.send('File uploaded successfully.');
   });

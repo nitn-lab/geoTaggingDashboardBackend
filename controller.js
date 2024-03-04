@@ -63,7 +63,7 @@ export const fetchAllEngineers = async () => {
     return row;
 }
 export const fetchAllAssets = async () => {
-    let sql = 'SELECT `id`,`asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block`,`asset_tagging`, `asset_utilized_price` FROM `assets`';
+    let sql = 'SELECT `id`,`asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block`,`asset_tagging`, `asset_utilized_price`,`asset_video_file_name` FROM `assets`';
     const [row] = await DB.execute(sql);
     return row;
 }
@@ -73,9 +73,9 @@ export const fetchAllAssets = async () => {
 
 export const fetchAssetsByDistrictOrBlock = async (data, isBlock) => {
    
-    let sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block`,`asset_tagging` FROM `assets` WHERE `district`=?';
+    let sql = 'SELECT `id`,`asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block`,`asset_tagging`,`asset_video_file_name` FROM `assets` WHERE `district`=?';
     if (isBlock)
-        sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block`,`asset_tagging` FROM `assets` WHERE `block`=?';
+        sql = 'SELECT `id`,`asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block`,`asset_tagging`,`asset_video_file_name` FROM `assets` WHERE `block`=?';
     const [row] = await DB.execute(sql, [data]);
     // DB.end();
     return row;
@@ -83,9 +83,9 @@ export const fetchAssetsByDistrictOrBlock = async (data, isBlock) => {
 
 export const fetchAssetsByIDOrAssetsTagging = async (data, idID) => {
    
-    let sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block`,`asset_tagging` FROM `assets` WHERE `asset_tagging`=?';
+    let sql = 'SELECT `id`,`asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block`,`asset_tagging`,`asset_video_file_name` FROM `assets` WHERE `asset_tagging`=?';
     if (idID)
-        sql = 'SELECT `asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block`,`asset_tagging` FROM `assets` WHERE `id`=?';
+        sql = 'SELECT `id`,`asset_name`, `asset_category`, `asset_location`,`asset_price`,`asset_description`,`asset_notes`,`asset_images`,`scheme`,`financial_year`,`district`,`block`,`asset_tagging`,`asset_video_file_name` FROM `assets` WHERE `id`=?';
     const [row] = await DB.execute(sql, [data]);
     // DB.end();
     return row;
@@ -468,7 +468,7 @@ export default {
             .join(' and ');
             // console.log('filterkey',Filterkeys)
             
-            const assests = await DB.execute(`SELECT id,asset_name, asset_category, asset_location,asset_price,asset_utilized_price,asset_description,asset_notes,asset_images,scheme,financial_year,district,block,asset_tagging FROM assets WHERE ${Filterkeys};`);
+            const assests = await DB.execute(`SELECT id,asset_name, asset_category, asset_location,asset_price,asset_utilized_price,asset_description,asset_notes,asset_images,scheme,financial_year,district,block,asset_tagging,asset_video_file_name FROM assets WHERE ${Filterkeys};`);
 
             if (assests[0].length === 0) {
                 return res.status(200).json({
