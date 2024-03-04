@@ -633,7 +633,7 @@ export default {
             .map(([key, value]) => `${key}="${value}"`)
             .join(', ');
 
-            // console.log(convertedString)
+            console.log(convertedString)
 
             const [result] = await DB.execute(`UPDATE assets SET ${convertedString} WHERE id = ${assetId}`);
 

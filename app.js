@@ -55,8 +55,8 @@ const videosDirectory = path.join(__dirname, 'uploads');
 // Endpoint to retrieve uploaded videos
 app.get('/videos/:filename', (req, res) => {
     // console.log("/videossss/ function")
-    const data = verifyToken(req.headers.access_token);
-    if (data?.status) return res.status(data.status).json(data);
+    // const data = verifyToken(req.headers.access_token);
+    // if (data?.status) return res.status(data.status).json(data);
     const filename = req.params.filename;
     const videoPath = path.join(videosDirectory, filename);
     console.log(videoPath)
@@ -91,7 +91,7 @@ const storage = multer.diskStorage({
     },
     filename: function (req, file, cb) {
         console.log("fileNN",file)
-        let originalname = sanitizeFilename(file.originalname) 
+        let originalname = file.originalname
       cb(null, originalname); 
     }
   });
@@ -99,7 +99,7 @@ const storage = multer.diskStorage({
 const _upload = multer({ storage: storage });
 
 app.post('/upload-video', _upload.single('file'), (req, res) => {
-    console.log("filename",req.file.originalname)
+    console.log("filename",req)
     if (!req.file || path.extname(req.file.originalname).toLowerCase() !== '.mp4') {
         return res.status(400).send('Only .mp4 files are allowed');
     }
@@ -113,8 +113,55 @@ app.post('/upload-video', _upload.single('file'), (req, res) => {
         });
     // res.send('File uploaded successfully.');
   });
-  
 
+const imageDirectory = path.join(__dirname, 'images');  
+app.get('/image/:filename', (req, res) => {
+    // console.log("/videossss/ function")
+    // const data = verifyToken(req.headers.access_token);
+    // if (data?.status) return res.status(data.status).json(data);
+    const filename = req.params.filename;
+    const imagePath = path.join(imageDirectory, filename);
+    console.log(imagePath)
+    if (fs.existsSync(imagePath)) {
+        // res.setHeader('Content-Type', 'video/mp4');
+        const imagesStream = fs.createReadStream(imagePath);
+        imagesStream.pipe(res);
+    } else {
+        res.status(404).send('Image not found');
+    }
+});
+
+
+  const Image_storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, 'images/') // Destination folder for uploaded files
+    },
+    filename: function (req, file, cb) {
+      // Keep original file name
+      console.log("bjasfgui",file)
+      cb(null, file.originalname);
+    }
+  });
+  
+  // Set up multer middleware
+  const upload_images = multer({ storage: Image_storage });
+  
+  // Define route for uploading images
+  app.post('/upload-images', upload_images.array('images', 5), (req, res) => {
+    // 'images' should match the name attribute in your form
+    console.log("files",req.files)
+  
+    // Array of uploaded files
+    const files = req.files;
+  
+    if (!files) {
+      return res.status(400).send('No files were uploaded.');
+    }
+  
+    // Process files, e.g., save to database or do further processing
+    res.send('Files uploaded successfully.');
+  });
+  
 app.get('/', (req, res) => {
     res.send('Hello World!');
 });
