@@ -1154,11 +1154,15 @@ export default {
     delete_financial_year: async (req, res, next) => {
         try {
             // DELETE FROM category WHERE CustomerName='Alfreds Futterkiste'; const { asset_name, asset_category, asset_location,asset_price,asset_description,asset_notes,asset_images} = req.body;
-            const updatedData = req.body;
-            const ID = req.params.id;
+            // const updatedData = req.body;
+            // const ID = req.params.id;
+            var Ids = req.body.data;
+            Ids=assetIds.sort()
+            // console.log(assetIds,'assetIDs')
+            Ids=assetIds.toString()
   
 
-            const [result] = await DB.execute(`DELETE FROM financial_year WHERE id = ${ID}`);
+            const [result] = await DB.execute(`DELETE FROM financial_year WHERE id in ${Ids}`);
 
             // console.log('result1',result1)
             res.status(201).json({
